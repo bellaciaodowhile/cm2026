@@ -53,7 +53,7 @@ export default function MorphTitle({ onFinal }) {
         setPhase('final')
         onFinal?.()
       }, 900)
-    }, 2000)
+    }, 1000)
     return () => clearTimeout(t)
   }, [])
 
