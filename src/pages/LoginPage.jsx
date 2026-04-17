@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { Lock, Eye, EyeOff, Music } from 'lucide-react'
+import DevCredit from '../components/DevCredit'
 
 export default function LoginPage() {
   const { login } = useAuth()
@@ -75,6 +76,7 @@ export default function LoginPage() {
             Ingresar
           </button>
         </form>
+        <DevCredit inline />
       </div>
     </div>
   )

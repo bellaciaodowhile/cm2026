@@ -3,6 +3,7 @@ import { Music, Calendar, MapPin, X } from 'lucide-react'
 import RegistroForm from '../components/RegistroForm'
 import PianoBackground from '../components/PianoBackground'
 import MorphTitle from '../components/MorphTitle'
+import DevCredit from '../components/DevCredit'
 import logo from '../assets/logo.png'
 
 export default function LandingPage() {
@@ -39,6 +40,8 @@ export default function LandingPage() {
             style={{ height: '52px', filter: 'brightness(0) invert(1)', opacity: 0.9 }}
           />
         </div>
+
+        <DevCredit />
 
         {/* Hero */}
         <main className="flex-1 flex items-center justify-center px-4 py-4">

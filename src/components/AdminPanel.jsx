@@ -1,22 +1,19 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { RefreshCw, Users, Filter, Search } from 'lucide-react'
+import { RefreshCw, Users, Filter, Search, ChevronLeft, ChevronRight } from 'lucide-react'
 import StatsCharts from './StatsCharts'
 
 const CATEGORIAS = ['Todas', 'Solista', 'Coral', 'Grupo', 'Trío', 'Dúo']
-const SEMINARIOS = [
-  'Todos',
-  'Manejo de sonido',
-  'Dirección de himnos',
-  'Formación de coros',
-  'Vocalización de corales',
-]
+const SEMINARIOS = ['Todos', 'Manejo de sonido', 'Dirección de himnos', 'Formación de coros', 'Vocalización de corales']
+const PAGE_SIZES = [10, 20, 30, 'Todos']
 
 export default function AdminPanel() {
   const [registros, setRegistros] = useState([])
   const [loading, setLoading] = useState(true)
   const [filtros, setFiltros] = useState({ asociacion: 'Todas', categoria: 'Todas', seminario: 'Todos' })
   const [query, setQuery] = useState('')
+  const [pageSize, setPageSize] = useState(10)
+  const [page, setPage] = useState(1)
 
   async function fetchData() {
     setLoading(true)
@@ -30,25 +27,51 @@ export default function AdminPanel() {
 
   useEffect(() => { fetchData() }, [])
 
+  // Reset página cuando cambian filtros o búsqueda
+  useEffect(() => { setPage(1) }, [filtros, query, pageSize])
+
   const filtered = registros.filter((r) => {
     if (filtros.asociacion !== 'Todas' && r.asociacion !== filtros.asociacion) return false
     if (filtros.categoria !== 'Todas' && r.categoria !== filtros.categoria) return false
     if (filtros.seminario !== 'Todos' && r.seminario !== filtros.seminario) return false
     if (query.trim()) {
       const q = query.toLowerCase()
-      const searchable = [
-        r.nombre_apellido, r.ciudad, r.iglesia, r.distrito,
-        r.categoria, r.seminario, r.nombre_agrupacion, r.asociacion,
-      ].filter(Boolean).join(' ').toLowerCase()
+      const searchable = [r.nombre_apellido, r.ciudad, r.iglesia, r.distrito, r.categoria, r.seminario, r.nombre_agrupacion, r.asociacion]
+        .filter(Boolean).join(' ').toLowerCase()
       if (!searchable.includes(q)) return false
     }
     return true
   })
 
+  const isAll = pageSize === 'Todos'
+  const totalPages = isAll ? 1 : Math.ceil(filtered.length / pageSize)
+  const paginated = isAll ? filtered : filtered.slice((page - 1) * pageSize, page * pageSize)
+
+  function Row({ r, i }) {
+    return (
+      <tr className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+        <td className="px-4 py-3 text-gray-400">{(page - 1) * (isAll ? 0 : pageSize) + i + 1}</td>
+        <td className="px-4 py-3">
+          <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${r.asociacion === 'AVSOR' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}>
+            {r.asociacion}
+          </span>
+        </td>
+        <td className="px-4 py-3 font-medium text-gray-800 whitespace-nowrap">{r.nombre_apellido}</td>
+        <td className="px-4 py-3 text-gray-600">{r.edad}</td>
+        <td className="px-4 py-3 text-gray-600">{r.ciudad}</td>
+        <td className="px-4 py-3 text-gray-600">{r.iglesia}</td>
+        <td className="px-4 py-3 text-gray-600">{r.distrito}</td>
+        <td className="px-4 py-3">
+          <span className="px-2 py-0.5 rounded-full text-xs bg-indigo-100 text-indigo-700 font-medium">{r.categoria}</span>
+        </td>
+        <td className="px-4 py-3 text-gray-600">{r.nombre_agrupacion || <span className="text-gray-300">—</span>}</td>
+        <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{r.seminario}</td>
+      </tr>
+    )
+  }
+
   return (
     <div className="space-y-6">
-
-      {/* Gráficos — usan todos los registros sin filtrar */}
       <StatsCharts data={registros} />
 
       {/* Filtros */}
@@ -57,7 +80,6 @@ export default function AdminPanel() {
           <Filter className="w-4 h-4" />
           <span className="text-sm font-semibold">Filtros</span>
         </div>
-        {/* Buscador */}
         <div className="relative mb-3">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
@@ -69,50 +91,51 @@ export default function AdminPanel() {
           />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <FilterSelect
-            label="Asociación"
-            value={filtros.asociacion}
-            onChange={(v) => setFiltros((p) => ({ ...p, asociacion: v }))}
-            options={['Todas', 'AVSOR', 'AVOR']}
-          />
-          <FilterSelect
-            label="Categoría"
-            value={filtros.categoria}
-            onChange={(v) => setFiltros((p) => ({ ...p, categoria: v }))}
-            options={CATEGORIAS}
-          />
-          <FilterSelect
-            label="Seminario"
-            value={filtros.seminario}
-            onChange={(v) => setFiltros((p) => ({ ...p, seminario: v }))}
-            options={SEMINARIOS}
-          />
+          <FilterSelect label="Asociación" value={filtros.asociacion} onChange={(v) => setFiltros((p) => ({ ...p, asociacion: v }))} options={['Todas', 'AVSOR', 'AVOR']} />
+          <FilterSelect label="Categoría" value={filtros.categoria} onChange={(v) => setFiltros((p) => ({ ...p, categoria: v }))} options={CATEGORIAS} />
+          <FilterSelect label="Seminario" value={filtros.seminario} onChange={(v) => setFiltros((p) => ({ ...p, seminario: v }))} options={SEMINARIOS} />
         </div>
       </div>
 
-      {/* Header con conteo */}
-      <div className="flex items-center justify-between">
+      {/* Header: conteo + por página + actualizar */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-gray-700">
           <Users className="w-5 h-5 text-indigo-500" />
           <span className="font-semibold">{filtered.length} participante{filtered.length !== 1 ? 's' : ''}</span>
         </div>
-        <button
-          onClick={fetchData}
-          className="flex items-center gap-1.5 text-sm text-indigo-600 hover:text-indigo-800 transition"
-        >
-          <RefreshCw className="w-4 h-4" />
-          Actualizar
-        </button>
+        <div className="flex items-center gap-3">
+          {/* Selector de tamaño de página */}
+          <div className="flex items-center gap-1.5 text-sm text-gray-600">
+            <span>Mostrar</span>
+            <div className="flex gap-1">
+              {PAGE_SIZES.map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setPageSize(s)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition cursor-pointer ${
+                    pageSize === s ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+          <button onClick={fetchData} className="flex items-center gap-1.5 text-sm text-indigo-600 hover:text-indigo-800 transition cursor-pointer">
+            <RefreshCw className="w-4 h-4" />
+            Actualizar
+          </button>
+        </div>
       </div>
 
       {/* Cards — móvil */}
       <div className="sm:hidden space-y-3">
         {loading ? (
           <p className="text-center py-10 text-gray-400">Cargando...</p>
-        ) : filtered.length === 0 ? (
+        ) : paginated.length === 0 ? (
           <p className="text-center py-10 text-gray-400">No hay registros con estos filtros.</p>
         ) : (
-          filtered.map((r) => (
+          paginated.map((r) => (
             <div key={r.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="font-semibold text-gray-900">{r.nombre_apellido}</span>
@@ -122,9 +145,7 @@ export default function AdminPanel() {
               </div>
               <div className="flex flex-wrap gap-1.5">
                 <span className="px-2 py-0.5 rounded-full text-xs bg-indigo-100 text-indigo-700 font-medium">{r.categoria}</span>
-                {r.nombre_agrupacion && (
-                  <span className="px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-600">{r.nombre_agrupacion}</span>
-                )}
+                {r.nombre_agrupacion && <span className="px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-600">{r.nombre_agrupacion}</span>}
               </div>
               <div className="text-xs text-gray-500 space-y-0.5">
                 <p>{r.iglesia} · {r.distrito}</p>
@@ -149,33 +170,58 @@ export default function AdminPanel() {
           <tbody>
             {loading ? (
               <tr><td colSpan={10} className="text-center py-10 text-gray-400">Cargando...</td></tr>
-            ) : filtered.length === 0 ? (
+            ) : paginated.length === 0 ? (
               <tr><td colSpan={10} className="text-center py-10 text-gray-400">No hay registros con estos filtros.</td></tr>
             ) : (
-              filtered.map((r, i) => (
-                <tr key={r.id} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                  <td className="px-4 py-3 text-gray-400">{i + 1}</td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${r.asociacion === 'AVSOR' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}>
-                      {r.asociacion}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 font-medium text-gray-800 whitespace-nowrap">{r.nombre_apellido}</td>
-                  <td className="px-4 py-3 text-gray-600">{r.edad}</td>
-                  <td className="px-4 py-3 text-gray-600">{r.ciudad}</td>
-                  <td className="px-4 py-3 text-gray-600">{r.iglesia}</td>
-                  <td className="px-4 py-3 text-gray-600">{r.distrito}</td>
-                  <td className="px-4 py-3">
-                    <span className="px-2 py-0.5 rounded-full text-xs bg-indigo-100 text-indigo-700 font-medium">{r.categoria}</span>
-                  </td>
-                  <td className="px-4 py-3 text-gray-600">{r.nombre_agrupacion || <span className="text-gray-300">—</span>}</td>
-                  <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{r.seminario}</td>
-                </tr>
-              ))
+              paginated.map((r, i) => <Row key={r.id} r={r} i={i} />)
             )}
           </tbody>
         </table>
       </div>
+
+      {/* Paginación */}
+      {!isAll && totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className="cursor-pointer p-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+
+          {Array.from({ length: totalPages }, (_, i) => i + 1)
+            .filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
+            .reduce((acc, p, idx, arr) => {
+              if (idx > 0 && p - arr[idx - 1] > 1) acc.push('...')
+              acc.push(p)
+              return acc
+            }, [])
+            .map((p, idx) =>
+              p === '...' ? (
+                <span key={`ellipsis-${idx}`} className="px-2 text-gray-400 text-sm">…</span>
+              ) : (
+                <button
+                  key={p}
+                  onClick={() => setPage(p)}
+                  className={`cursor-pointer w-9 h-9 rounded-lg text-sm font-medium transition ${
+                    page === p ? 'bg-indigo-600 text-white' : 'border border-gray-200 text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  {p}
+                </button>
+              )
+            )}
+
+          <button
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+            className="cursor-pointer p-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      )}
     </div>
   )
 }
