@@ -62,7 +62,7 @@ export default function DevCredit({ inline = false, style }) {
               </a>
 
               <a
-                href="https://wa.me/584122974011"
+                href="https://wa.me/584122974011?text=%C2%A1Hola!%20Quiero%20llevar%20mi%20idea%20al%20siguiente%20nivel%20y%20creo%20que%20puedes%20ayudarme.%20%C2%BFHablamos%3F"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:bg-gray-50 transition group"
