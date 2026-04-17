@@ -1,7 +1,6 @@
 import { useState } from 'react'
-import { X, Mail } from 'lucide-react'
+import { X, Mail, Heart } from 'lucide-react'
 
-// Icono SVG de WhatsApp
 function WhatsAppIcon({ className }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -10,14 +9,11 @@ function WhatsAppIcon({ className }) {
   )
 }
 
-export default function DevCredit({ inline = false }) {
+export default function DevCredit({ inline = false, style }) {
   const [open, setOpen] = useState(false)
 
-  const trigger = (
-    <button
-      onClick={() => setOpen(true)}
-      className="cursor-pointer text-gray-400 hover:text-gray-600 transition text-xs tracking-wide"
-    >
+  const triggerBtn = (cls) => (
+    <button onClick={() => setOpen(true)} className={cls}>
       by <span className="underline underline-offset-2">codezardi</span>
     </button>
   )
@@ -25,15 +21,12 @@ export default function DevCredit({ inline = false }) {
   return (
     <>
       {inline ? (
-        <div className="text-center mt-5">{trigger}</div>
+        <div className="flex justify-center mt-5">
+          {triggerBtn('cursor-pointer text-gray-400 hover:text-gray-600 transition text-xs tracking-wide')}
+        </div>
       ) : (
-        <div className="absolute top-4 left-5" style={{ zIndex: 10 }}>
-          <button
-            onClick={() => setOpen(true)}
-            className="cursor-pointer text-white/30 hover:text-white/70 transition text-xs tracking-wide"
-          >
-            by <span className="underline underline-offset-2">codezardi</span>
-          </button>
+        <div className="absolute top-4 left-5" style={{ zIndex: 10, ...style }}>
+          {triggerBtn('cursor-pointer text-white/30 hover:text-white/70 transition text-xs tracking-wide')}
         </div>
       )}
 
@@ -51,11 +44,11 @@ export default function DevCredit({ inline = false }) {
               <X className="w-4 h-4" />
             </button>
 
-            <h3 className="font-bold text-gray-900 text-lg mb-1">codezardi</h3>
-            <p className="text-gray-400 text-xs mb-5">Desarrollo web & aplicaciones</p>
-
+            <h3 className="font-bold text-gray-900 text-md mb-0.5 flex items-center">
+              Desarrollado con <Heart className="w-3.5 h-3.5 text-red-500 fill-red-500 mx-1" /> por codezardi
+            </h3>
+            <p className="text-gray-400 text-xs mb-1">Desarrollo web & aplicaciones</p>
             <div className="space-y-3">
-              {/* Email */}
               <a
                 href="mailto:codezardi@gmail.com"
                 className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:bg-gray-50 transition group"
@@ -68,7 +61,6 @@ export default function DevCredit({ inline = false }) {
                 </span>
               </a>
 
-              {/* WhatsApp — número oculto, solo icono */}
               <a
                 href="https://wa.me/584122974011"
                 target="_blank"

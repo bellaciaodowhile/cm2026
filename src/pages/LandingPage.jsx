@@ -41,7 +41,7 @@ export default function LandingPage() {
           />
         </div>
 
-        <DevCredit />
+        <DevCredit style={{ opacity: showContent ? 1 : 0, transition: 'opacity 0.5s ease', pointerEvents: showContent ? 'auto' : 'none' }} />
 
         {/* Hero */}
         <main className="flex-1 flex items-center justify-center px-4 py-4">
