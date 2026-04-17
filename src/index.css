@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: 'RomanceFatal';
+  src: url('/fonts/romance fatal serif JC Fonts.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
