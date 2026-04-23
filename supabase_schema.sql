@@ -11,6 +11,8 @@ CREATE TABLE inscripciones (
   categoria TEXT NOT NULL,
   nombre_agrupacion TEXT,
   seminario TEXT NOT NULL,
+  ministerio_musical BOOLEAN DEFAULT FALSE,
+  rol_ministerio TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -30,3 +32,7 @@ CREATE POLICY "insert_public" ON inscripciones
 -- Si quieres que el panel sea público también, cambia 'authenticated' por 'anon'
 CREATE POLICY "select_authenticated" ON inscripciones
   FOR SELECT USING (true);
+
+-- Columnas para ministerio musical (ejecutar si la tabla ya existe)
+-- ALTER TABLE inscripciones ADD COLUMN IF NOT EXISTS ministerio_musical BOOLEAN DEFAULT FALSE;
+-- ALTER TABLE inscripciones ADD COLUMN IF NOT EXISTS rol_ministerio TEXT;

@@ -11,6 +11,11 @@ const SEMINARIOS = [
   'Vocalización de corales',
 ]
 const ASOCIACIONES = ['AVSOR', 'AVOR']
+const ROLES_MINISTERIO = [
+  'Coord. de Música de Zona',
+  'Coord. de Música por Distrito',
+  'Director de Música de la Iglesia',
+]
 
 const INITIAL = {
   asociacion: '',
@@ -22,6 +27,8 @@ const INITIAL = {
   categoria: '',
   nombre_agrupacion: '',
   seminario: '',
+  ministerio_musical: false,
+  rol_ministerio: '',
 }
 
 export default function RegistroForm({ onSuccess }) {
@@ -43,11 +50,17 @@ export default function RegistroForm({ onSuccess }) {
     if (!form.categoria) e.categoria = 'Selecciona una categoría'
     if (needsAgrupacion && !form.nombre_agrupacion.trim()) e.nombre_agrupacion = 'Campo requerido'
     if (!form.seminario) e.seminario = 'Selecciona un seminario'
+    if (form.ministerio_musical && !form.rol_ministerio) e.rol_ministerio = 'Selecciona un rol'
     return e
   }
 
   function handleChange(e) {
-    const { name, value } = e.target
+    const { name, value, type, checked } = e.target
+    if (type === 'checkbox') {
+      setForm((prev) => ({ ...prev, [name]: checked, ...(name === 'ministerio_musical' && !checked ? { rol_ministerio: '' } : {}) }))
+      setErrors((prev) => ({ ...prev, [name]: undefined }))
+      return
+    }
     setForm((prev) => ({ ...prev, [name]: value }))
     setErrors((prev) => ({ ...prev, [name]: undefined }))
     // Si cambia a Solista, limpiar agrupación
@@ -77,8 +90,10 @@ export default function RegistroForm({ onSuccess }) {
         categoria: form.categoria,
         nombre_agrupacion: needsAgrupacion ? form.nombre_agrupacion : null,
         seminario: form.seminario,
+        ministerio_musical: form.ministerio_musical,
+        rol_ministerio: form.ministerio_musical ? form.rol_ministerio : null,
       },
-      ['asociacion', 'categoria', 'seminario', 'edad'] // estos no se capitalizan
+      ['asociacion', 'categoria', 'seminario', 'edad', 'ministerio_musical', 'rol_ministerio'] // estos no se capitalizan
     )
 
     const { error } = await supabase.from('inscripciones').insert([payload])
@@ -173,6 +188,30 @@ export default function RegistroForm({ onSuccess }) {
         error={errors.seminario}
         options={SEMINARIOS}
       />
+
+      {/* Ministerio Musical */}
+      <div className="space-y-3">
+        <label className="flex items-center gap-3 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            name="ministerio_musical"
+            checked={form.ministerio_musical}
+            onChange={handleChange}
+            className="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-400 cursor-pointer"
+          />
+          <span className="text-sm font-semibold text-gray-700">Pertenece al Ministerio Musical</span>
+        </label>
+        {form.ministerio_musical && (
+          <SelectField
+            label="Rol en el Ministerio"
+            name="rol_ministerio"
+            value={form.rol_ministerio}
+            onChange={handleChange}
+            error={errors.rol_ministerio}
+            options={ROLES_MINISTERIO}
+          />
+        )}
+      </div>
 
       {status === 'error' && (
         <div className="flex items-center gap-2 text-red-600 bg-red-50 border border-red-200 rounded-lg p-3 text-sm">

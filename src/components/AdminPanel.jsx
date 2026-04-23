@@ -5,12 +5,13 @@ import StatsCharts from './StatsCharts'
 
 const CATEGORIAS = ['Todas', 'Solista', 'Coral', 'Grupo', 'Trío', 'Dúo']
 const SEMINARIOS = ['Todos', 'Manejo de sonido', 'Dirección de himnos', 'Formación de coros', 'Vocalización de corales']
+const MINISTERIOS = ['Todos', 'Sí', 'No']
 const PAGE_SIZES = [10, 20, 30, 'Todos']
 
 export default function AdminPanel() {
   const [registros, setRegistros] = useState([])
   const [loading, setLoading] = useState(true)
-  const [filtros, setFiltros] = useState({ asociacion: 'Todas', categoria: 'Todas', seminario: 'Todos' })
+  const [filtros, setFiltros] = useState({ asociacion: 'Todas', categoria: 'Todas', seminario: 'Todos', ministerio: 'Todos' })
   const [query, setQuery] = useState('')
   const [pageSize, setPageSize] = useState(10)
   const [page, setPage] = useState(1)
@@ -34,9 +35,11 @@ export default function AdminPanel() {
     if (filtros.asociacion !== 'Todas' && r.asociacion !== filtros.asociacion) return false
     if (filtros.categoria !== 'Todas' && r.categoria !== filtros.categoria) return false
     if (filtros.seminario !== 'Todos' && r.seminario !== filtros.seminario) return false
+    if (filtros.ministerio === 'Sí' && !r.ministerio_musical) return false
+    if (filtros.ministerio === 'No' && r.ministerio_musical) return false
     if (query.trim()) {
       const q = query.toLowerCase()
-      const searchable = [r.nombre_apellido, r.ciudad, r.iglesia, r.distrito, r.categoria, r.seminario, r.nombre_agrupacion, r.asociacion]
+      const searchable = [r.nombre_apellido, r.ciudad, r.iglesia, r.distrito, r.categoria, r.seminario, r.nombre_agrupacion, r.asociacion, r.rol_ministerio]
         .filter(Boolean).join(' ').toLowerCase()
       if (!searchable.includes(q)) return false
     }
@@ -56,8 +59,10 @@ export default function AdminPanel() {
             {r.asociacion}
           </span>
         </td>
-        <td className="px-4 py-3 font-medium text-gray-800 whitespace-nowrap">{r.nombre_apellido}</td>
-        <td className="px-4 py-3 text-gray-600">{r.edad}</td>
+        <td className="px-4 py-3">
+          <span className="font-medium text-gray-800 whitespace-nowrap">{r.nombre_apellido}</span>
+          <span className="block text-xs text-gray-400">{r.edad} años</span>
+        </td>
         <td className="px-4 py-3 text-gray-600">{r.ciudad}</td>
         <td className="px-4 py-3 text-gray-600">{r.iglesia}</td>
         <td className="px-4 py-3 text-gray-600">{r.distrito}</td>
@@ -66,6 +71,12 @@ export default function AdminPanel() {
         </td>
         <td className="px-4 py-3 text-gray-600">{r.nombre_agrupacion || <span className="text-gray-300">—</span>}</td>
         <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{r.seminario}</td>
+        <td className="px-4 py-3">
+          {r.ministerio_musical
+            ? <span className="px-2 py-0.5 rounded-full text-xs bg-emerald-100 text-emerald-700 font-medium whitespace-nowrap">{r.rol_ministerio || 'Sí'}</span>
+            : <span className="text-gray-300">—</span>
+          }
+        </td>
       </tr>
     )
   }
@@ -94,6 +105,7 @@ export default function AdminPanel() {
           <FilterSelect label="Asociación" value={filtros.asociacion} onChange={(v) => setFiltros((p) => ({ ...p, asociacion: v }))} options={['Todas', 'AVSOR', 'AVOR']} />
           <FilterSelect label="Categoría" value={filtros.categoria} onChange={(v) => setFiltros((p) => ({ ...p, categoria: v }))} options={CATEGORIAS} />
           <FilterSelect label="Seminario" value={filtros.seminario} onChange={(v) => setFiltros((p) => ({ ...p, seminario: v }))} options={SEMINARIOS} />
+          <FilterSelect label="Ministerio Musical" value={filtros.ministerio} onChange={(v) => setFiltros((p) => ({ ...p, ministerio: v }))} options={MINISTERIOS} />
         </div>
       </div>
 
@@ -151,6 +163,9 @@ export default function AdminPanel() {
                 <p>{r.iglesia} · {r.distrito}</p>
                 <p>{r.ciudad} · {r.edad} años</p>
                 <p className="text-indigo-500">{r.seminario}</p>
+                {r.ministerio_musical && (
+                  <p className="text-emerald-600 font-medium">Ministerio: {r.rol_ministerio || 'Sí'}</p>
+                )}
               </div>
             </div>
           ))
@@ -162,7 +177,7 @@ export default function AdminPanel() {
         <table className="min-w-full text-sm">
           <thead className="bg-indigo-50 text-indigo-700">
             <tr>
-              {['#', 'Asociación', 'Nombre y Apellido', 'Edad', 'Ciudad', 'Iglesia', 'Distrito', 'Categoría', 'Agrupación', 'Seminario'].map((h) => (
+              {['#', 'Asociación', 'Nombre y Apellido', 'Ciudad', 'Iglesia', 'Distrito', 'Categoría', 'Agrupación', 'Seminario', 'Ministerio Musical'].map((h) => (
                 <th key={h} className="px-4 py-3 text-left font-semibold whitespace-nowrap">{h}</th>
               ))}
             </tr>
