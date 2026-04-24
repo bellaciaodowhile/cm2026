@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { sanitizeRecord } from '../lib/utils'
 import { Music, CheckCircle, Loader2, AlertCircle } from 'lucide-react'
@@ -170,11 +170,12 @@ export default function RegistroForm({ onSuccess }) {
 
       {/* Nombre agrupación (dinámico) */}
       {needsAgrupacion && (
-        <Field
-          label="Nombre de la Agrupación"
-          name="nombre_agrupacion"
+        <AgrupacionField
           value={form.nombre_agrupacion}
-          onChange={handleChange}
+          onChange={(val) => {
+            setForm((prev) => ({ ...prev, nombre_agrupacion: val }))
+            setErrors((prev) => ({ ...prev, nombre_agrupacion: undefined }))
+          }}
           error={errors.nombre_agrupacion}
         />
       )}
@@ -261,6 +262,69 @@ function SelectField({ label, name, value, onChange, error, options }) {
         <option value="">-- Seleccionar --</option>
         {options.map((o) => <option key={o} value={o}>{o}</option>)}
       </select>
+      {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
+    </div>
+  )
+}
+
+function AgrupacionField({ value, onChange, error }) {
+  const [suggestions, setSuggestions] = useState([])
+  const [open, setOpen] = useState(false)
+  const containerRef = useRef(null)
+
+  useEffect(() => {
+    const trimmed = value.trim()
+    if (!trimmed) { setSuggestions([]); setOpen(false); return }
+
+    const controller = new AbortController()
+    supabase
+      .from('inscripciones')
+      .select('nombre_agrupacion')
+      .ilike('nombre_agrupacion', `%${trimmed}%`)
+      .not('nombre_agrupacion', 'is', null)
+      .abortSignal(controller.signal)
+      .then(({ data }) => {
+        if (!data) return
+        const unique = [...new Set(data.map((r) => r.nombre_agrupacion))].slice(0, 8)
+        setSuggestions(unique)
+        setOpen(unique.length > 0)
+      })
+
+    return () => controller.abort()
+  }, [value])
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (containerRef.current && !containerRef.current.contains(e.target)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  return (
+    <div ref={containerRef} className="relative">
+      <label className="block text-sm font-medium text-gray-700 mb-1">Nombre de la Agrupación *</label>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onFocus={() => suggestions.length > 0 && setOpen(true)}
+        className={`w-full px-4 py-2.5 rounded-lg border ${error ? 'border-red-400 bg-red-50' : 'border-gray-300'} focus:outline-none focus:ring-2 focus:ring-indigo-400 text-gray-800`}
+        autoComplete="off"
+      />
+      {open && (
+        <ul className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+          {suggestions.map((s) => (
+            <li
+              key={s}
+              onMouseDown={() => { onChange(s); setOpen(false) }}
+              className="px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 cursor-pointer transition"
+            >
+              {s}
+            </li>
+          ))}
+        </ul>
+      )}
       {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
     </div>
   )
