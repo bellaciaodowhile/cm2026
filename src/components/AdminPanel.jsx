@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { RefreshCw, Users, Filter, Search, ChevronLeft, ChevronRight } from 'lucide-react'
+import { RefreshCw, Users, Filter, Search, ChevronLeft, ChevronRight, DollarSign, List } from 'lucide-react'
 import StatsCharts from './StatsCharts'
+import PaymentControl from './PaymentControl'
 
 const CATEGORIAS = ['Todas', 'Solista', 'Coral', 'Grupo', 'Trío', 'Dúo']
 const SEMINARIOS = ['Todos', 'Manejo de sonido', 'Dirección de himnos', 'Formación de coros', 'Vocalización de corales']
@@ -9,6 +10,7 @@ const MINISTERIOS = ['Todos', 'Sí', 'No']
 const PAGE_SIZES = [10, 20, 30, 'Todos']
 
 export default function AdminPanel() {
+  const [activeTab, setActiveTab] = useState('registros') // 'registros' o 'pagos'
   const [registros, setRegistros] = useState([])
   const [loading, setLoading] = useState(true)
   const [filtros, setFiltros] = useState({ asociacion: 'Todas', categoria: 'Todas', seminario: 'Todos', ministerio: 'Todos' })
@@ -83,9 +85,39 @@ export default function AdminPanel() {
 
   return (
     <div className="space-y-6">
-      <StatsCharts data={registros} />
+      {/* Tabs de navegación */}
+      <div className="flex border-b border-gray-200">
+        <button
+          onClick={() => setActiveTab('registros')}
+          className={`cursor-pointer px-6 py-3 font-medium text-sm transition relative ${
+            activeTab === 'registros'
+              ? 'text-indigo-600 border-b-2 border-indigo-600'
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          <List className="w-4 h-4 inline mr-2" />
+          Registros
+        </button>
+        <button
+          onClick={() => setActiveTab('pagos')}
+          className={`cursor-pointer px-6 py-3 font-medium text-sm transition relative ${
+            activeTab === 'pagos'
+              ? 'text-indigo-600 border-b-2 border-indigo-600'
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          <DollarSign className="w-4 h-4 inline mr-2" />
+          Control de Pagos
+        </button>
+      </div>
 
-      {/* Filtros */}
+      {activeTab === 'pagos' ? (
+        <PaymentControl />
+      ) : (
+        <>
+          <StatsCharts data={registros} />
+
+          {/* Filtros */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
         <div className="flex items-center gap-2 mb-3 text-gray-600">
           <Filter className="w-4 h-4" />
@@ -236,6 +268,8 @@ export default function AdminPanel() {
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>
+      )}
+        </>
       )}
     </div>
   )
